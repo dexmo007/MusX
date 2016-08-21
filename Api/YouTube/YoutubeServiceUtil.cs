@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Google.Apis.Services;
 using Google.Apis.YouTube.v3;
 using Google.Apis.YouTube.v3.Data;
@@ -57,5 +58,24 @@ namespace MusX_v02.Api.YouTube
 
             return response.Items;
         }
+
+        public async Task<IEnumerable<Video>> GetResultsAsync(string key)
+        {
+            var searchListRequest = _youtubeService.Search.List("snippet");
+            searchListRequest.Type = "video";
+            searchListRequest.Q = key;
+            searchListRequest.MaxResults = 25;
+            // execute first request async
+            var searchListResponse = await searchListRequest.ExecuteAsync();
+            var ids = from searchResult in searchListResponse.Items select searchResult.Id.VideoId;
+
+            var idString = string.Join(",", ids);
+
+            var videoListRequest = _youtubeService.Videos.List("snippet,contentDetails");
+            videoListRequest.Id = idString;
+            // seconds request async
+            var response = await videoListRequest.ExecuteAsync();
+            return response.Items;
+        } 
     }
 }
